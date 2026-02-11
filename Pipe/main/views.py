@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import KeyMetrics
 import csv
 
@@ -7,7 +7,7 @@ def index(request):
     error = None
 
     if request.method == "POST":
-        csv_file = request.FILES.get('csv_files')
+        csv_file = request.FILES.get('csv_file')
 
         if not csv_file:
             error = "No file detected"
@@ -19,7 +19,7 @@ def index(request):
             reader = csv.DictReader(decoded_file)
 
             # Check required columns
-            required_columns = ['name', 'price', 'quantity']  # Replace with your model fields
+            required_columns = ['category', 'price', 'sale']  # Replace with your model fields
             if not all(col in reader.fieldnames for col in required_columns):
                 error = f"CSV missing required columns: {', '.join(required_columns)}"
             else:
@@ -28,9 +28,9 @@ def index(request):
                 for row in reader:
                     try:
                         KeyMetrics.objects.create(
-                            name=row['name'],
+                            category=row['category'],
                             price=float(row['price']),
-                            quantity=int(row['quantity'])
+                            sale=int(row['sale'])
                         )
                         row_count += 1
                     except ValueError:
@@ -39,7 +39,15 @@ def index(request):
 
                 message = f"{csv_file.name} uploaded successfully with {row_count} rows."
 
+    rows = KeyMetrics.objects.all()
     return render(request, 'main/index.html', {
         'message': message,
-        'error': error
+        'error': error,
+        'rows': rows,
     })
+
+
+def delete_metric(request, id):
+    metric = get_object_or_404(KeyMetrics, id=id)
+    metric.delete()
+    return redirect('index')

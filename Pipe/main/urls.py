@@ -3,4 +3,6 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('delete/<int:id>/', views.delete_metric, name='delete_metric'),
+
 ]
